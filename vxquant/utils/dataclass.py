@@ -14,7 +14,9 @@ import copy
 import pickle
 from enum import Enum
 from collections import abc
-from typing import Any, Callable, Mapping, Sequence, Optional, Type
+from typing import Any, Callable, Iterator, Mapping, Sequence, Optional, Type
+
+from requests import delete
 
 try:
     import simplejson as json
@@ -235,9 +237,9 @@ class vxPropertyField(vxField):
 class vxDatetimeField(vxField):
     """时间类型字段"""
 
-    def __init__(self, default_factory=vxtime.now, formatter_string="%F %T.%f"):
+    def __init__(self, default_factory=vxtime.now, formatter_string="%F %H:%M:%S.%f"):
         super().__init__(
-            default_factory=vxtime.now,
+            default_factory=default_factory,
             convertor_factory=to_timestamp,
             format_factory=lambda value: to_timestring(value, formatter_string),
         )
@@ -307,12 +309,17 @@ class vxDataMeta(type):
 class vxDataClass(metaclass=vxDataMeta):
     """数据基类"""
 
-    __vxfields__ = {}
-    __sortkeys__ = ()
+    __vxfields__: dict = {}
+    __sortkeys__: tuple = ()
+    __dbtable__: str = ""
+    __primary_keys__: tuple = ()
 
     def __init__(self, *args, **kwargs) -> None:
-        if args:
-            kwargs = args[0]
+
+        if args and isinstance(args[0], dict):
+            kwargs.update(args[0])
+        elif args:
+            kwargs.update(zip(self.__vxfields__, args))
 
         for attr in self.keys():
             value = kwargs.pop(attr, getattr(self, attr))
@@ -403,6 +410,52 @@ class vxDataClass(metaclass=vxDataMeta):
     def get(self, key, _default=None) -> Any:
         """获取相关"""
         return getattr(self, key, _default)
+
+    @classmethod
+    def get_table_name(cls):
+        """数据库表格名称"""
+        if cls.__dbtable__:
+            return cls.__dbtable__
+        raise AttributeError(
+            "未进行初始化设定，请通过vxDatabase.mapping(tablename, primary_keys) 设定"
+        )
+
+    @classmethod
+    def get_primary_keys(cls):
+        """数据库主键"""
+        return cls.__primary_keys__
+
+    @property
+    def dbconn(self):
+        """数据库链接"""
+        return self.__dbconn__ if hasattr(self.__class__, "__dbconn__") else None
+
+    def save(self):
+        """保存对象"""
+        self.dbconn.save(self)
+        return self
+
+    def delete(self):
+        """删除对象"""
+        conditions = [
+            f"{col}='{getattr(self, col)}'" for col in self.get_primary_keys()
+        ]
+        self.dbconn.delete(self.get_table_name(), *conditions)
+        return self
+
+    def query(self, *conditions):
+        """查询条件"""
+        table_name = self.get_table_name()
+        yield from self.dbconn.query(table_name, *conditions)
+
+    def distinct(self, col_name, *conditions) -> Iterator:
+        """去重数据"""
+        return self.dbconn.distinct(col_name, self.get_table_name(), *conditions)
+
+    @classmethod
+    def install_db(cls, dbconn):
+        """安装dbconn"""
+        cls.__dbconn__ = dbconn
 
 
 @vxJSONEncoder.register(vxDataClass)

@@ -34,13 +34,13 @@ def remove_subdirs(root_dir, rmdirs=None):
     if isinstance(root_dir, str):
         root_dir = pathlib.Path(root_dir)
 
-    for dir in root_dir.iterdir():
-        if dir.name in rmdirs:
+    for d in root_dir.iterdir():
+        if d.name in rmdirs:
             with contextlib.suppress(OSError):
-                rmtree(dir.absolute())
+                rmtree(d.absolute())
 
-        if dir.is_dir():
-            remove_subdirs(dir, rmdirs)
+        if d.is_dir():
+            remove_subdirs(d, rmdirs)
 
 
 # 初始化命令 python setup.py init
@@ -101,7 +101,7 @@ class InitCommand(Command):
             )
 
         self.status("Activate Virtual Envriments...")
-        os.system(f"pipenv shell")
+        os.system("pipenv shell")
 
         sys.exit()
 

@@ -52,7 +52,8 @@ def to_timestring(date_time, fmt="%Y-%m-%d %H:%M:%S"):
 @to_timestring.register(int)
 def _(date_time, fmt="%Y-%m-%d %H:%M:%S"):
     """处理timestamp类型"""
-    return time.strftime(fmt, time.localtime(date_time))
+    date_time = datetime.datetime.fromtimestamp(date_time).astimezone(local_tzinfo)
+    return date_time.strftime(fmt)
 
 
 @to_timestring.register(datetime.time)
@@ -68,7 +69,7 @@ def _(date_time, fmt="%Y-%m-%d %H:%M:%S"):
 
 
 @to_timestring.register(datetime.datetime)
-def _(date_time, fmt="%Y-%m-%d %H:%M:%S"):
+def _(date_time, fmt="%Y-%m-%d %H:%M:%S.%f"):
     """处理datetime"""
     if date_time.tzinfo:
         date_time = date_time.astimezone(local_tzinfo)
@@ -79,7 +80,8 @@ def _(date_time, fmt="%Y-%m-%d %H:%M:%S"):
 @to_timestring.register(time.struct_time)
 def _(date_time, fmt="%Y-%m-%d %H:%M:%S"):
     """处理struct_time类型"""
-    return time.strftime(fmt, date_time)
+    date_time = datetime.datetime(*date_time).astimezone(local_tzinfo)
+    return date_time.strftime(fmt)
 
 
 @to_timestring.register(str)
