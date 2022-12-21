@@ -1,0 +1,87 @@
+[tool.poetry]
+name = "vxquant"
+version = "2022.12.21"
+description = "一个简单、易用、面向中国股市实盘的python量化交易框架"
+license = "MIT"
+authors = ["vex1023 <vex1023@qq.com>"]
+homepage = "https://gitee.com/vxquant/vxquant"
+keywords = ["quant", "tools"]
+readme = "README.md"
+
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+packages = [
+    { include = "vxquant",from = "src/" },
+    { include = "vxutils",from = "src/" },
+    { include = "vxsched",from = "src/" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pyzmq = "*"
+pymongo = "*"
+python-dateutil = "*"
+requests = "*"
+six = "*"
+numpy = "*"
+pandas = "*"
+polars = "*"
+pyarrow = "*"
+
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+flake8 = "*"
+pylint = "*"
+twine = "*"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0",'setuptools','Cython','numpy']
+build-backend = "poetry.core.masonry.api"
+
+
+
+[tool.isort]
+py_version = 38
+profile = "black"
+force_single_line = true
+combine_as_imports = true
+lines_between_types = 1
+lines_after_imports = 2
+src_paths = ["src", "tests"]
+extend_skip = ["setup.py"]
+known_third_party = ["poetry.core"]
+
+
+[tool.black]
+target-version = ['py38']
+preview = true
+force-exclude = '''
+.*/setup\.py$
+'''
+
+
+[tool.mypy]
+files = "src"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+show_error_codes = true
+strict = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+]
